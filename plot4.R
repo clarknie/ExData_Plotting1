@@ -1,35 +1,17 @@
-# Load data and subset to two days only (2007-02-01 and 2007-02-02)
+# Q4: # Across the United States, how have emissions from coal combustion-related sources changed from 1999–2008?
+# Load data 
 #################################################################################
-
-dat <- read.csv('../household_power_consumption.txt', sep = ";", na.strings = "?")
-# Date in format dd/mm/yyyy; select only the 2007-02-01 and 2007-02-02
-dat_sub <- subset(dat, Date == "1/2/2007" | Date == "2/2/2007")
-
-# transform date and time into DateTime that R understands
-dat_sub <- transform(dat_sub, DateTime = strptime(paste(Date, Time), 
-                                                  format = "%d/%m/%Y %H:%M:%S"))
+NEI <- readRDS('../data/exdata-data-NEI_data/summarySCC_PM25.rds')
+SCC <- readRDS('../data/exdata-data-NEI_data/Source_Classification_Code.rds')
 
 # Generate plot4.png
 #################################################################################
 
-png("plot4.png") # default to be width = 480, height = 480 pixels
-par(mfrow = c(2,2))
-
-# top left
-with(dat_sub, plot(DateTime, Global_active_power, xlab = "", ylab= "Global Active Power", type ="l" ))
-
-# top right
-with(dat_sub, plot(DateTime, Voltage, type ="l", xlab = "datetime"))
-
-# bottom left
-
-with(dat_sub, plot(DateTime, Sub_metering_1, main = "", type = "n", xlab = "", ylab = "Energy sub metering"))
-with(dat_sub, lines(DateTime, Sub_metering_1, col = "black" ))
-with(dat_sub, lines(DateTime, Sub_metering_2, col = "red" ))
-with(dat_sub, lines(DateTime, Sub_metering_3, col = "blue" ))
-legend("topright",  col = c("black", "red", "blue"), legend = c("Sub_metering_1", "Sub_metering_2","Sub_metering_3"), lty="solid")
-
-# bottom right
-with(dat_sub, plot(DateTime, Global_reactive_power, xlab = "datetime", type ="l"))
-
+# According to the code book: http://www3.epa.gov/ttn/chief/net/2008neiv3/2008_neiv3_tsd_draft.pdf
+# SCC.Level.Three with a keyword of "Coal" would be coal combustion-related record
+coal <- NEI[NEI$SCC %in% SCC$SCC[grep("Coal", SCC$SCC.Level.Three)], ]
+toPlot4 <- with(coal, tapply(Emissions, year, sum))
+toPlot4
+png("plot4.png") 
+plot(x = names(toPlot4), y = toPlot4, type = 'l', main = "Total emission of Coal related source", xlab = "Year", ylab = "Total Emission in tons")
 dev.off()

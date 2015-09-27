@@ -1,21 +1,23 @@
-# Load data and subset to two days only (2007-02-01 and 2007-02-02)
+# Q3: Of the four types of sources indicated by the type (point, nonpoint, onroad, nonroad) variable, which of these four sources have seen decreases in emissions from 1999–2008 for Baltimore City? Which have seen increases in emissions from 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
+# Load data 
 #################################################################################
-
-dat <- read.csv('../household_power_consumption.txt', sep = ";", na.strings = "?")
-# Date in format dd/mm/yyyy; select only the 2007-02-01 and 2007-02-02
-dat_sub <- subset(dat, Date == "1/2/2007" | Date == "2/2/2007")
-
-# transform date and time into DateTime that R understands
-dat_sub <- transform(dat_sub, DateTime = strptime(paste(Date, Time), 
-                                                  format = "%d/%m/%Y %H:%M:%S"))
+NEI <- readRDS('../data/exdata-data-NEI_data/summarySCC_PM25.rds')
+SCC <- readRDS('../data/exdata-data-NEI_data/Source_Classification_Code.rds')
 
 # Generate plot3.png
 #################################################################################
 
-png("plot3.png") # default to be width = 480, height = 480 pixels
-with(dat_sub, plot(DateTime, Sub_metering_1, main = "", type = "n", xlab = "", ylab = "Energy sub metering"))
-with(dat_sub, lines(DateTime, Sub_metering_1, col = "black" ))
-with(dat_sub, lines(DateTime, Sub_metering_2, col = "red" ))
-with(dat_sub, lines(DateTime, Sub_metering_3, col = "blue" ))
-legend("topright",  col = c("black", "red", "blue"), legend = c("Sub_metering_1", "Sub_metering_2","Sub_metering_3"), lty="solid")
+# generate the dataframe with emissions sum, type, year
+emission_sums <- numeric()
+years <- character()
+types <- character()
+for (tp in with(NEI, unique(type))){
+    types <- c(types, rep(tp, 4))
+    temp <- with(subset(NEI, fips == "24510" & type == tp), tapply(Emissions, year, sum))
+    emission_sums <- c(emission_sums, temp)
+    years <- c(years, names(temp))
+}
+toPlot3 <- data.frame(EmissionsSum = emission_sums, Year = years, Type = types)
+png("plot3.png") 
+qplot(Year, EmissionsSum, data = toPlot3, geom = c("point" ), color = Type)
 dev.off()

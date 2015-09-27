@@ -1,17 +1,12 @@
-# Load data and subset to two days only (2007-02-01 and 2007-02-02)
+# Q1: Have total emissions from PM2.5 decreased in the United States from 1999 to 2008? Using the base plotting system, make a plot showing the total PM2.5 emission from all sources for each of the years 1999, 2002, 2005, and 2008.
+# Load data 
 #################################################################################
-
-dat <- read.csv('../household_power_consumption.txt', sep = ";", na.strings = "?")
-# Date in format dd/mm/yyyy; select only the 2007-02-01 and 2007-02-02
-dat_sub <- subset(dat, Date == "1/2/2007" | Date == "2/2/2007")
-
-# transform date and time into DateTime that R understands
-dat_sub <- transform(dat_sub, DateTime = strptime(paste(Date, Time), 
-                                                  format = "%d/%m/%Y %H:%M:%S"))
+NEI <- readRDS('../data/exdata-data-NEI_data/summarySCC_PM25.rds')
+SCC <- readRDS('../data/exdata-data-NEI_data/Source_Classification_Code.rds')
 
 # Generate plot1.png
 #################################################################################
-
-png("plot1.png") # default to be width = 480, height = 480 pixels
-with(dat_sub, hist(Global_active_power, col = "red", main = "Global Active Power", xlab = "Global Active Power (kilowatts)"))
+toPlot1 <- with(NEI, tapply(Emissions, year, sum))
+png("plot1.png") 
+plot(x = names(toPlot1), y = toPlot1, type = 'l', main = "Total emission of PM2.5 in Tons", xlab = "Year", ylab = "PM2.5")
 dev.off()
